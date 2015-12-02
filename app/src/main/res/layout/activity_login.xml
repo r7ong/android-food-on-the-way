@@ -7,29 +7,12 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="FACEBOOK"
-        android:id="@+id/btnFacebook"
+        android:text="TWITTER"
+        android:id="@+id/btnTwitter"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="200dp"
-        android:width="150dp" />
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="GOOGLE"
-        android:id="@+id/btnGoogle"
-        android:layout_below="@+id/btnFacebook"
-        android:layout_centerHorizontal="true"
-        android:width="150dp" />
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="EMAIL"
-        android:id="@+id/btnEmail"
-        android:layout_below="@+id/btnGoogle"
-        android:layout_centerHorizontal="true"
-        android:width="150dp" />
+        android:width="150dp"
+        android:onClick="loginToRest" />
 
 </RelativeLayout>
