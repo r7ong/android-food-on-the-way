@@ -35,10 +35,14 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 
 
 import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.maps.android.PolyUtil;
 import com.loopj.android.http.AsyncHttpClient;
@@ -216,6 +220,9 @@ public class MapActivity extends AppCompatActivity implements
         String origin="600 E Weddell Dr, Sunnyvale,CA";
         String destination="Palo Alto,CA";
         String url = "http://maps.googleapis.com/maps/api/directions/json";
+        final BitmapDescriptor defaultMarker = BitmapDescriptorFactory
+                .defaultMarker(BitmapDescriptorFactory.HUE_RED);
+
 //        AsyncHttpClient client = new AsyncHttpClient();
 
         // specify the params
@@ -234,6 +241,13 @@ public class MapActivity extends AppCompatActivity implements
                 String encodedPoints = Map.fromJSON(response).getPolylinePoints();
                 List<LatLng> latLngs = PolyUtil.decode(encodedPoints);
                 Log.d("in-- latLngs =", latLngs.toString());
+
+                //add dest marker
+                Marker marker = map.addMarker(new MarkerOptions()
+                        .position(latLngs.get(latLngs.size() - 1))
+//                        .title(title)
+//                        .snippet(snippet)
+                        .icon(defaultMarker));
 
                 //adding polyline
                 addPolylineToMap(latLngs);
@@ -256,7 +270,7 @@ public class MapActivity extends AppCompatActivity implements
                 bc.include(latLng);
             }
 
-            googleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bc.build(), 50),4000,null);
+            googleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bc.build(), 50),4000, null);
         }
     }
     public void addPolylineToMap(List<LatLng> latLngs) {
