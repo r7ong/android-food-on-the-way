@@ -5,4 +5,22 @@
     android:layout_height="match_parent"
     tools:context="com.calvinlsliang.foodontheway.SelectionActivity">
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="SELECT LOCATION"
+        android:id="@+id/btnLocation"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true"
+        android:onClick="selectLocation"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="OPEN MAP"
+        android:id="@+id/btnMap"
+        android:layout_above="@+id/btnLocation"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="70dp"
+        android:onClick="selectMap" />
 </RelativeLayout>
