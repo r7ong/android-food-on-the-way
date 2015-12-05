@@ -38,6 +38,9 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 
 
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.maps.android.PolyUtil;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.JsonHttpResponseHandler;
@@ -46,7 +49,7 @@ import com.loopj.android.http.RequestParams;
 import org.apache.http.Header;
 import org.json.JSONArray;
 import org.json.JSONObject;
-
+import java.util.List;
 
 public class MapActivity extends AppCompatActivity implements
         GoogleApiClient.ConnectionCallbacks,
@@ -59,6 +62,8 @@ public class MapActivity extends AppCompatActivity implements
     private LocationRequest mLocationRequest;
     private long UPDATE_INTERVAL = 60000;  /* 60 secs */
     private long FASTEST_INTERVAL = 5000; /* 5 secs */
+
+    private LatLng myLatLng;
 
 //    private MapClient client;
 
@@ -197,6 +202,7 @@ public class MapActivity extends AppCompatActivity implements
             Log.d("debug location=", location.toString());
             Toast.makeText(this, "GPS location was found!", Toast.LENGTH_SHORT).show();
             LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+            myLatLng = latLng;
             CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 17);
             map.animateCamera(cameraUpdate);
 //            startLocationUpdates();
@@ -207,8 +213,8 @@ public class MapActivity extends AppCompatActivity implements
     }
 
     public void getDirection() {
-        String origin="Chicago,IL";
-        String destination="Seattle,WA";
+        String origin="600 E Weddell Dr, Sunnyvale,CA";
+        String destination="Palo Alto,CA";
         String url = "http://maps.googleapis.com/maps/api/directions/json";
 //        AsyncHttpClient client = new AsyncHttpClient();
 
@@ -225,7 +231,13 @@ public class MapActivity extends AppCompatActivity implements
                 Log.d("in-- DEBUG", response.toString());
                 // Root JSON in response is an dictionary i.e { "data : [ ... ] }
                 // Handle resulting parsed JSON response here
-                
+                String encodedPoints = Map.fromJSON(response).getPolylinePoints();
+                List<LatLng> latLngs = PolyUtil.decode(encodedPoints);
+                Log.d("in-- latLngs =", latLngs.toString());
+
+                //adding polyline
+                addPolylineToMap(latLngs);
+                fixZoomForLatLngs(map, latLngs);
             }
 
             @Override
@@ -236,57 +248,23 @@ public class MapActivity extends AppCompatActivity implements
         });
     }
 
-    private void getDirection_0() {
+    public  void fixZoomForLatLngs(GoogleMap googleMap, List<LatLng> latLngs) {
+        if (latLngs!=null && latLngs.size() > 0) {
+            LatLngBounds.Builder bc = new LatLngBounds.Builder();
 
-        String origin="Chicago,IL";
-        String destination="Seattle,WA";
-        String url = "http://maps.googleapis.com/maps/api/directions/json";
-
-        // specify the params
-        RequestParams params = new RequestParams();
-        params.put("origin", origin);
-        params.put("destination", destination);
-        params.put("sensor", false);
-        // execute the request
-
-        client.get(url, params, new JsonHttpResponseHandler() {
-            @Override
-            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
-                Log.d("in-- DEBUG", response.toString());
-                // Root JSON in response is an dictionary i.e { "data : [ ... ] }
-                // Handle resulting parsed JSON response here
+            for (LatLng latLng: latLngs) {
+                bc.include(latLng);
             }
 
-            @Override
-            public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
-                // called when response HTTP status is "4XX" (eg. 401, 403, 404)
-                Log.d("in-- DEBUG = statusCode", Integer.toString(statusCode));
-            }
-        });
-//        client.getSome();
-
-//        client.getDirection(new JsonHttpResponseHandler(){
-//            // success
-//            @Override
-//            public void onSuccess(int statusCode, Header[] headers, JSONArray json) {
-//                Log.d("in-- DEBUG", json.toString());
-////                aTweets.clear();
-//                // json here
-//                // deserialize json
-//                // create model and add them to the adapter
-//                // load the model data into listview
-////                aTweets.addAll(Tweet.fromJSONArray(json));
-////                lastlowId = aTweets.getItem(json.length()-1).getUid();
-//
-////                swipeContainer.setRefreshing(false);
-//            }
-//
-//            // failure
-//            @Override
-//            public void onFailure(int statusCode, Header[] headers, Throwable throwable, JSONObject errorResponse) {
-//                Log.d("in--f DEBUG", errorResponse.toString());
-//            }
-//        });
+            googleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bc.build(), 50),4000,null);
+        }
+    }
+    public void addPolylineToMap(List<LatLng> latLngs) {
+        PolylineOptions options = new PolylineOptions();
+        for (LatLng latLng : latLngs) {
+            options.add(latLng);
+        }
+        map.addPolyline(options);
     }
 
 //    protected void startLocationUpdates() {
