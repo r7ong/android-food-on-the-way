@@ -37,6 +37,17 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 
+
+import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.AsyncHttpResponseHandler;
+import com.loopj.android.http.JsonHttpResponseHandler;
+import com.loopj.android.http.RequestParams;
+
+import org.apache.http.Header;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+
 public class MapActivity extends AppCompatActivity implements
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
@@ -48,6 +59,10 @@ public class MapActivity extends AppCompatActivity implements
     private LocationRequest mLocationRequest;
     private long UPDATE_INTERVAL = 60000;  /* 60 secs */
     private long FASTEST_INTERVAL = 5000; /* 5 secs */
+
+//    private MapClient client;
+
+    AsyncHttpClient client;
 
     /*
      * Define a request code to send to Google Play services This code is
@@ -71,6 +86,8 @@ public class MapActivity extends AppCompatActivity implements
         } else {
             Toast.makeText(this, "Error - Map Fragment was null!!", Toast.LENGTH_SHORT).show();
         }
+//        client = new MapClient();
+        client = new AsyncHttpClient();
 
     }
 
@@ -183,9 +200,93 @@ public class MapActivity extends AppCompatActivity implements
             CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 17);
             map.animateCamera(cameraUpdate);
 //            startLocationUpdates();
+            getDirection();
         } else {
             Toast.makeText(this, "Current location was null, enable GPS on emulator!", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    public void getDirection() {
+        String origin="Chicago,IL";
+        String destination="Seattle,WA";
+        String url = "http://maps.googleapis.com/maps/api/directions/json";
+//        AsyncHttpClient client = new AsyncHttpClient();
+
+        // specify the params
+        RequestParams params = new RequestParams();
+        params.put("origin", origin);
+        params.put("destination", destination);
+        params.put("sensor",false);
+        // execute the request
+
+        client.get(url, params, new JsonHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                Log.d("in-- DEBUG", response.toString());
+                // Root JSON in response is an dictionary i.e { "data : [ ... ] }
+                // Handle resulting parsed JSON response here
+                
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
+                // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                Log.d("in-- DEBUG = statusCode", Integer.toString(statusCode));
+            }
+        });
+    }
+
+    private void getDirection_0() {
+
+        String origin="Chicago,IL";
+        String destination="Seattle,WA";
+        String url = "http://maps.googleapis.com/maps/api/directions/json";
+
+        // specify the params
+        RequestParams params = new RequestParams();
+        params.put("origin", origin);
+        params.put("destination", destination);
+        params.put("sensor", false);
+        // execute the request
+
+        client.get(url, params, new JsonHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                Log.d("in-- DEBUG", response.toString());
+                // Root JSON in response is an dictionary i.e { "data : [ ... ] }
+                // Handle resulting parsed JSON response here
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
+                // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                Log.d("in-- DEBUG = statusCode", Integer.toString(statusCode));
+            }
+        });
+//        client.getSome();
+
+//        client.getDirection(new JsonHttpResponseHandler(){
+//            // success
+//            @Override
+//            public void onSuccess(int statusCode, Header[] headers, JSONArray json) {
+//                Log.d("in-- DEBUG", json.toString());
+////                aTweets.clear();
+//                // json here
+//                // deserialize json
+//                // create model and add them to the adapter
+//                // load the model data into listview
+////                aTweets.addAll(Tweet.fromJSONArray(json));
+////                lastlowId = aTweets.getItem(json.length()-1).getUid();
+//
+////                swipeContainer.setRefreshing(false);
+//            }
+//
+//            // failure
+//            @Override
+//            public void onFailure(int statusCode, Header[] headers, Throwable throwable, JSONObject errorResponse) {
+//                Log.d("in--f DEBUG", errorResponse.toString());
+//            }
+//        });
     }
 
 //    protected void startLocationUpdates() {
