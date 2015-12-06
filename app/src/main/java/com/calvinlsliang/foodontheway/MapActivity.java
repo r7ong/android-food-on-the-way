@@ -56,6 +56,8 @@ import com.loopj.android.http.RequestParams;
 import org.apache.http.Header;
 import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
 import java.util.List;
 
 public class MapActivity extends AppCompatActivity implements
@@ -71,6 +73,8 @@ public class MapActivity extends AppCompatActivity implements
     private long FASTEST_INTERVAL = 5000; /* 5 secs */
 
     private LatLng myLatLng;
+    private String wayPoints;
+    ArrayList<Place> places;
 
 //    private MapClient client;
 
@@ -100,6 +104,7 @@ public class MapActivity extends AppCompatActivity implements
         }
 //        client = new MapClient();
         client = new AsyncHttpClient();
+        places = new ArrayList<>();
 
     }
 
@@ -217,8 +222,77 @@ public class MapActivity extends AppCompatActivity implements
             String origin = "Sunnyvale,CA";
             String destination = "Palo Alto,CA";
             getDirection(origin, destination);
+
+
+
         } else {
             Toast.makeText(this, "Current location was null, enable GPS on emulator!", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public String getLatLngString(LatLng latLng){
+        return Double.toString(latLng.latitude)+","+Double.toString(latLng.longitude);
+    }
+
+    public void getRestaurants(LatLng latLng) {
+        String url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json";
+        final BitmapDescriptor defaultMarker = BitmapDescriptorFactory
+                .defaultMarker(BitmapDescriptorFactory.HUE_BLUE);
+
+        // specify the params
+        RequestParams params = new RequestParams();
+//        params.put("location", "37.368900000000004,-122.03633");
+        params.put("location", getLatLngString(latLng));
+        params.put("radius", "500");
+        params.put("types","food");
+        params.put("name","burger");
+        params.put("key","AIzaSyDtkF1VK5-Aj08-VcBb99b7DcH-jCJfnGE");
+        // execute the request
+
+//        AsyncHttpClient client = new AsyncHttpClient();
+
+        client.addHeader("Accept-Encoding", "identity");
+        client.get(url, params, new JsonHttpResponseHandler() {
+
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                Log.d("in-- getRestaurants", response.toString());
+                //TODO assign wayPoints from response
+                ArrayList<Place> newPlaces = Place.fromJSONObj(response);
+                //add duration
+//                for()
+                places.addAll(newPlaces);
+
+
+                //remove
+                addRest();
+
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
+                // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                Log.e("in-- MyApp", "Caught error", t);
+            }
+        });
+    }
+
+    public void addRest(){
+        final BitmapDescriptor defaultMarker = BitmapDescriptorFactory
+                .defaultMarker(BitmapDescriptorFactory.HUE_BLUE);
+        Log.d("in-- placesize", Integer.toString(places.size()));
+        Log.d("in-- placesize latlng", places.get(0).getName());
+
+        for(int i=0;i<places.size();i++) {
+            LatLng latLng = places.get(i).getLatLng();
+            Marker marker = map.addMarker(new MarkerOptions()
+                    .position(latLng)
+                            //                        .title(title)
+                            //                        .snippet(snippet)
+                    .icon(defaultMarker));
+            IconGenerator iconFactory = new IconGenerator(MapActivity.this);
+            iconFactory.setStyle(IconGenerator.STYLE_BLUE);
+            addIcon(iconFactory, places.get(i).getName(), latLng);
         }
     }
 
@@ -234,6 +308,10 @@ public class MapActivity extends AppCompatActivity implements
         params.put("origin", origin);
         params.put("destination", destination);
         params.put("sensor",false);
+        //TODO add wayPoints to request
+        // https://developers.google.com/maps/documentation/directions/intro#Waypoints
+//        params.put("waypoints", wayPoints);
+
         // execute the request
 
         client.get(url, params, new JsonHttpResponseHandler() {
@@ -261,12 +339,14 @@ public class MapActivity extends AppCompatActivity implements
                 //adding polyline
                 addPolylineToMap(latLngs);
                 fixZoomForLatLngs(map, latLngs);
+
+                //TODO add wayPoints on map and label with time of delay
             }
 
             @Override
             public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
                 // called when response HTTP status is "4XX" (eg. 401, 403, 404)
-                Log.d("in-- DEBUG = statusCode", Integer.toString(statusCode));
+//                Log.d("in-- DEBUG = statusCode", Integer.toString(statusCode));
             }
         });
     }
@@ -295,6 +375,13 @@ public class MapActivity extends AppCompatActivity implements
         for (LatLng latLng : latLngs) {
             options.add(latLng);
         }
+        int latLngSize = latLngs.size();
+        Log.d("DEBUG latLngSize=", Integer.toString(latLngSize));
+        int step = latLngSize/20;
+        for(int i=0;i<latLngs.size();i+=step){
+            getRestaurants(latLngs.get(i));
+        }
+
         map.addPolyline(options);
     }
 
