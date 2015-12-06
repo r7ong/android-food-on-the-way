@@ -71,6 +71,7 @@ public class MapActivity extends AppCompatActivity implements
     private long FASTEST_INTERVAL = 5000; /* 5 secs */
 
     private LatLng myLatLng;
+    private List<String> wayPoints;
 
 //    private MapClient client;
 
@@ -216,10 +217,45 @@ public class MapActivity extends AppCompatActivity implements
             //TODO get origin, dest from selection intent
             String origin = "Sunnyvale,CA";
             String destination = "Palo Alto,CA";
+            getRestaurants();
             getDirection(origin, destination);
+
         } else {
             Toast.makeText(this, "Current location was null, enable GPS on emulator!", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    public void getRestaurants() {
+        String url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json";
+//        url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=-33.8670522,151.1957362&radius=500&types=food&name=cruise&key=AIzaSyDtkF1VK5-Aj08-VcBb99b7DcH-jCJfnGE";
+        final BitmapDescriptor defaultMarker = BitmapDescriptorFactory
+                .defaultMarker(BitmapDescriptorFactory.HUE_BLUE);
+
+        // specify the params
+        RequestParams params = new RequestParams();
+        params.put("location", "-33.8670522,151.1957362");
+        params.put("radius", "500");
+        params.put("types","food");
+        params.put("name","cruise");
+        params.put("key","AIzaSyDtkF1VK5-Aj08-VcBb99b7DcH-jCJfnGE");
+        // execute the request
+
+        AsyncHttpClient client = new AsyncHttpClient();
+
+        client.get(url, params, new JsonHttpResponseHandler() {
+
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                Log.d("in-- getRestaurants", response.toString());
+                //TODO assign wayPoints from response
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
+                // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                Log.e("in-- MyApp", "Caught error", t);
+            }
+        });
     }
 
     public void getDirection(String origin, String destination) {
@@ -234,6 +270,9 @@ public class MapActivity extends AppCompatActivity implements
         params.put("origin", origin);
         params.put("destination", destination);
         params.put("sensor",false);
+        //TODO add wayPoints to request
+        // https://developers.google.com/maps/documentation/directions/intro#Waypoints
+
         // execute the request
 
         client.get(url, params, new JsonHttpResponseHandler() {
@@ -261,12 +300,14 @@ public class MapActivity extends AppCompatActivity implements
                 //adding polyline
                 addPolylineToMap(latLngs);
                 fixZoomForLatLngs(map, latLngs);
+
+                //TODO add wayPoints on map and label with time of delay
             }
 
             @Override
             public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
                 // called when response HTTP status is "4XX" (eg. 401, 403, 404)
-                Log.d("in-- DEBUG = statusCode", Integer.toString(statusCode));
+//                Log.d("in-- DEBUG = statusCode", Integer.toString(statusCode));
             }
         });
     }
