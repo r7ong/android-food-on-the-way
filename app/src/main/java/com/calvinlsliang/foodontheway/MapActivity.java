@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.graphics.Bitmap;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
@@ -35,7 +36,27 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+
+
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.maps.android.PolyUtil;
+import com.google.maps.android.ui.BubbleIconFactory;
+import com.google.maps.android.ui.IconGenerator;
+import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.AsyncHttpResponseHandler;
+import com.loopj.android.http.JsonHttpResponseHandler;
+import com.loopj.android.http.RequestParams;
+
+import org.apache.http.Header;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import java.util.List;
 
 public class MapActivity extends AppCompatActivity implements
         GoogleApiClient.ConnectionCallbacks,
@@ -48,6 +69,12 @@ public class MapActivity extends AppCompatActivity implements
     private LocationRequest mLocationRequest;
     private long UPDATE_INTERVAL = 60000;  /* 60 secs */
     private long FASTEST_INTERVAL = 5000; /* 5 secs */
+
+    private LatLng myLatLng;
+
+//    private MapClient client;
+
+    AsyncHttpClient client;
 
     /*
      * Define a request code to send to Google Play services This code is
@@ -71,6 +98,8 @@ public class MapActivity extends AppCompatActivity implements
         } else {
             Toast.makeText(this, "Error - Map Fragment was null!!", Toast.LENGTH_SHORT).show();
         }
+//        client = new MapClient();
+        client = new AsyncHttpClient();
 
     }
 
@@ -180,12 +209,93 @@ public class MapActivity extends AppCompatActivity implements
             Log.d("debug location=", location.toString());
             Toast.makeText(this, "GPS location was found!", Toast.LENGTH_SHORT).show();
             LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+            myLatLng = latLng;
             CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 17);
             map.animateCamera(cameraUpdate);
 //            startLocationUpdates();
+            //TODO get origin, dest from selection intent
+            String origin = "Sunnyvale,CA";
+            String destination = "Palo Alto,CA";
+            getDirection(origin, destination);
         } else {
             Toast.makeText(this, "Current location was null, enable GPS on emulator!", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    public void getDirection(String origin, String destination) {
+        String url = "http://maps.googleapis.com/maps/api/directions/json";
+        final BitmapDescriptor defaultMarker = BitmapDescriptorFactory
+                .defaultMarker(BitmapDescriptorFactory.HUE_RED);
+
+//        AsyncHttpClient client = new AsyncHttpClient();
+
+        // specify the params
+        RequestParams params = new RequestParams();
+        params.put("origin", origin);
+        params.put("destination", destination);
+        params.put("sensor",false);
+        // execute the request
+
+        client.get(url, params, new JsonHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                Log.d("in-- DEBUG", response.toString());
+                // Root JSON in response is an dictionary i.e { "data : [ ... ] }
+                // Handle resulting parsed JSON response here
+                Map mapData = Map.fromJSON(response);
+                String encodedPoints = mapData.getPolylinePoints();
+                String duration = mapData.getDuration();
+                List<LatLng> latLngs = PolyUtil.decode(encodedPoints);
+                Log.d("in-- latLngs =", latLngs.toString());
+
+                //add dest marker
+                Marker marker = map.addMarker(new MarkerOptions()
+                        .position(latLngs.get(latLngs.size() - 1))
+//                        .title(title)
+//                        .snippet(snippet)
+                        .icon(defaultMarker));
+                IconGenerator iconFactory = new IconGenerator(MapActivity.this);
+                iconFactory.setStyle(IconGenerator.STYLE_GREEN);
+                addIcon(iconFactory, duration, latLngs.get(latLngs.size() / 2));
+
+                //adding polyline
+                addPolylineToMap(latLngs);
+                fixZoomForLatLngs(map, latLngs);
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
+                // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                Log.d("in-- DEBUG = statusCode", Integer.toString(statusCode));
+            }
+        });
+    }
+
+    private void addIcon(IconGenerator iconFactory, String text, LatLng position) {
+        MarkerOptions markerOptions = new MarkerOptions().
+                icon(BitmapDescriptorFactory.fromBitmap(iconFactory.makeIcon(text))).
+                position(position).
+                anchor(iconFactory.getAnchorU(), iconFactory.getAnchorV());
+
+        map.addMarker(markerOptions);
+    }
+    public  void fixZoomForLatLngs(GoogleMap googleMap, List<LatLng> latLngs) {
+        if (latLngs!=null && latLngs.size() > 0) {
+            LatLngBounds.Builder bc = new LatLngBounds.Builder();
+
+            for (LatLng latLng: latLngs) {
+                bc.include(latLng);
+            }
+
+            googleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bc.build(), 50),4000, null);
+        }
+    }
+    public void addPolylineToMap(List<LatLng> latLngs) {
+        PolylineOptions options = new PolylineOptions();
+        for (LatLng latLng : latLngs) {
+            options.add(latLng);
+        }
+        map.addPolyline(options);
     }
 
 //    protected void startLocationUpdates() {
