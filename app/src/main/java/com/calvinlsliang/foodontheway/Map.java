@@ -23,6 +23,7 @@ import org.json.JSONObject;
  */
 public class Map {
     public String polylinePoints;
+    private String duration;
 
     public String getPolylinePoints() {
         return polylinePoints;
@@ -34,6 +35,7 @@ public class Map {
         try {
             JSONArray routesArray = jsonObject.getJSONArray("routes");
             map.polylinePoints = routesArray.getJSONObject(0).getJSONObject("overview_polyline").getString("points");
+            map.duration = routesArray.getJSONObject(0).getJSONArray("legs").getJSONObject(0).getJSONObject("duration").getString("text");
 
         } catch (JSONException e) {
             e.printStackTrace();
@@ -43,4 +45,7 @@ public class Map {
         return map;
     }
 
+    public String getDuration() {
+        return duration;
+    }
 }

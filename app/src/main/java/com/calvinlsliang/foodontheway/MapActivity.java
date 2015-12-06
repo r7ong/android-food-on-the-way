@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.graphics.Bitmap;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
@@ -45,6 +46,8 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.maps.android.PolyUtil;
+import com.google.maps.android.ui.BubbleIconFactory;
+import com.google.maps.android.ui.IconGenerator;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.JsonHttpResponseHandler;
@@ -210,15 +213,16 @@ public class MapActivity extends AppCompatActivity implements
             CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 17);
             map.animateCamera(cameraUpdate);
 //            startLocationUpdates();
-            getDirection();
+            //TODO get origin, dest from selection intent
+            String origin = "Sunnyvale,CA";
+            String destination = "Palo Alto,CA";
+            getDirection(origin, destination);
         } else {
             Toast.makeText(this, "Current location was null, enable GPS on emulator!", Toast.LENGTH_SHORT).show();
         }
     }
 
-    public void getDirection() {
-        String origin="600 E Weddell Dr, Sunnyvale,CA";
-        String destination="Palo Alto,CA";
+    public void getDirection(String origin, String destination) {
         String url = "http://maps.googleapis.com/maps/api/directions/json";
         final BitmapDescriptor defaultMarker = BitmapDescriptorFactory
                 .defaultMarker(BitmapDescriptorFactory.HUE_RED);
@@ -238,7 +242,9 @@ public class MapActivity extends AppCompatActivity implements
                 Log.d("in-- DEBUG", response.toString());
                 // Root JSON in response is an dictionary i.e { "data : [ ... ] }
                 // Handle resulting parsed JSON response here
-                String encodedPoints = Map.fromJSON(response).getPolylinePoints();
+                Map mapData = Map.fromJSON(response);
+                String encodedPoints = mapData.getPolylinePoints();
+                String duration = mapData.getDuration();
                 List<LatLng> latLngs = PolyUtil.decode(encodedPoints);
                 Log.d("in-- latLngs =", latLngs.toString());
 
@@ -248,6 +254,9 @@ public class MapActivity extends AppCompatActivity implements
 //                        .title(title)
 //                        .snippet(snippet)
                         .icon(defaultMarker));
+                IconGenerator iconFactory = new IconGenerator(MapActivity.this);
+                iconFactory.setStyle(IconGenerator.STYLE_GREEN);
+                addIcon(iconFactory, duration, latLngs.get(latLngs.size() / 2));
 
                 //adding polyline
                 addPolylineToMap(latLngs);
@@ -262,6 +271,14 @@ public class MapActivity extends AppCompatActivity implements
         });
     }
 
+    private void addIcon(IconGenerator iconFactory, String text, LatLng position) {
+        MarkerOptions markerOptions = new MarkerOptions().
+                icon(BitmapDescriptorFactory.fromBitmap(iconFactory.makeIcon(text))).
+                position(position).
+                anchor(iconFactory.getAnchorU(), iconFactory.getAnchorV());
+
+        map.addMarker(markerOptions);
+    }
     public  void fixZoomForLatLngs(GoogleMap googleMap, List<LatLng> latLngs) {
         if (latLngs!=null && latLngs.size() > 0) {
             LatLngBounds.Builder bc = new LatLngBounds.Builder();
