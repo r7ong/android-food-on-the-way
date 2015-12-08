@@ -4,7 +4,10 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
@@ -18,6 +21,8 @@ public class SelectionActivity extends AppCompatActivity {
 
     EditText etStart;
     EditText etDestination;
+    Spinner spinnerDistance;
+    String radius;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,6 +31,51 @@ public class SelectionActivity extends AppCompatActivity {
 
         etStart = (EditText) findViewById(R.id.etStart);
         etDestination = (EditText) findViewById(R.id.etDestination);
+
+        initializeSpinner();
+    }
+
+    public void initializeSpinner() {
+        Spinner spinner = (Spinner) findViewById(R.id.spinnerDistance);
+
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
+                R.array.distance_array, android.R.layout.simple_spinner_item);
+
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+
+        spinner.setAdapter(adapter);
+
+        spinnerDistance.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String selection  = spinnerDistance.getItemAtPosition(position).toString();
+                String distance = "500";
+
+                switch (selection) {
+                    case "Near (5 miles)":
+                        distance = "8046";
+                        break;
+                    case "Close (10 miles)":
+                        distance = "16093";
+                        break;
+                    case "Far (20 miles)":
+                        distance = "32186";
+                        break;
+                    default:
+                        break;
+
+                }
+
+                radius = distance;
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+
+
     }
 
     public void selectMap(View view) {
@@ -35,6 +85,8 @@ public class SelectionActivity extends AppCompatActivity {
         Intent i = new Intent(this, MapActivity.class);
         i.putExtra("origin", origin);
         i.putExtra("destination", destination);
+        i.putExtra("radius", radius);
+
         startActivity(i);
     }
 
