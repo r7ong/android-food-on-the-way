@@ -59,6 +59,7 @@ public class MapActivity extends AppCompatActivity implements
 
     private String origin = null;
     private String destination = null;
+    private String food = null;
     private String radius = null;
 
 //    private MapClient client;
@@ -92,6 +93,7 @@ public class MapActivity extends AppCompatActivity implements
 
         origin = getIntent().getStringExtra("origin");
         destination = getIntent().getStringExtra("destination");
+        food = getIntent().getStringExtra("food");
         radius = getIntent().getStringExtra("radius");
 
     }
@@ -233,7 +235,7 @@ public class MapActivity extends AppCompatActivity implements
         params.put("location", "-33.8670522,151.1957362");
         params.put("radius", radius);
         params.put("types","food");
-        params.put("name","cruise");
+        params.put("name", food);
         params.put("key","AIzaSyDC8ncI8wg-sQ--1cBeIzSFOQ6j1LlQOZU");
         // execute the request
 

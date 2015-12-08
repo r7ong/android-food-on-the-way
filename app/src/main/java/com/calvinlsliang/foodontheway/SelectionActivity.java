@@ -21,6 +21,7 @@ public class SelectionActivity extends AppCompatActivity {
 
     EditText etStart;
     EditText etDestination;
+    EditText etFood;
     Spinner spinnerDistance;
     String radius;
 
@@ -31,19 +32,20 @@ public class SelectionActivity extends AppCompatActivity {
 
         etStart = (EditText) findViewById(R.id.etStart);
         etDestination = (EditText) findViewById(R.id.etDestination);
+        etFood = (EditText) findViewById(R.id.etFood);
 
         initializeSpinner();
     }
 
     public void initializeSpinner() {
-        Spinner spinner = (Spinner) findViewById(R.id.spinnerDistance);
+        spinnerDistance = (Spinner) findViewById(R.id.spinnerDistance);
 
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
                 R.array.distance_array, android.R.layout.simple_spinner_item);
 
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
-        spinner.setAdapter(adapter);
+        spinnerDistance.setAdapter(adapter);
 
         spinnerDistance.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -81,10 +83,12 @@ public class SelectionActivity extends AppCompatActivity {
     public void selectMap(View view) {
         String origin = etStart.getText().toString();
         String destination = etDestination.getText().toString();
+        String food = etFood.getText().toString();
 
         Intent i = new Intent(this, MapActivity.class);
         i.putExtra("origin", origin);
         i.putExtra("destination", destination);
+        i.putExtra("food", food);
         i.putExtra("radius", radius);
 
         startActivity(i);
