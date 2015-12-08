@@ -4,9 +4,23 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.graphics.Bitmap;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
+import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
+import android.widget.Toast;
+
+
+import android.app.Activity;
+import android.app.Dialog;
+import android.content.Intent;
+import android.content.IntentSender;
+import android.location.Location;
+import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.Toast;
@@ -25,21 +39,24 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+
+
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.maps.android.PolyUtil;
+
 import com.google.maps.android.ui.IconGenerator;
 import com.loopj.android.http.AsyncHttpClient;
-import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.JsonHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
 
 import org.apache.http.Header;
 import org.json.JSONObject;
 
-import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class MapActivity extends AppCompatActivity implements
@@ -55,14 +72,22 @@ public class MapActivity extends AppCompatActivity implements
     private long FASTEST_INTERVAL = 5000; /* 5 secs */
 
     private LatLng myLatLng;
-    private List<String> wayPoints;
+    private String wayPoints;
+    ArrayList<Place> places;
+    private int durationSec;
+    HashMap<String, Marker> markerMap;
+    HashMap<String, Place> placeMap;
 
+//    String origin = "Sunnyvale,CA";
+//    String destination = "Palo Alto,CA";
+//    String radius = "500";
+//    String foodType = "burger";
     private String origin = null;
     private String destination = null;
-    private String food = null;
+    private String foodType = null;
     private String radius = null;
 
-//    private MapClient client;
+
 
     AsyncHttpClient client;
 
@@ -88,12 +113,15 @@ public class MapActivity extends AppCompatActivity implements
         } else {
             Toast.makeText(this, "Error - Map Fragment was null!!", Toast.LENGTH_SHORT).show();
         }
-//        client = new MapClient();
         client = new AsyncHttpClient();
+        places = new ArrayList<>();
+
+        markerMap = new HashMap<String, Marker>();
+        placeMap = new HashMap<String, Place>();
 
         origin = getIntent().getStringExtra("origin");
         destination = getIntent().getStringExtra("destination");
-        food = getIntent().getStringExtra("food");
+        foodType = getIntent().getStringExtra("food");
         radius = getIntent().getStringExtra("radius");
 
     }
@@ -104,6 +132,16 @@ public class MapActivity extends AppCompatActivity implements
             // Map is ready
             Toast.makeText(this, "Map Fragment was loaded properly!", Toast.LENGTH_SHORT).show();
             map.setMyLocationEnabled(true);
+
+            map.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener(){
+
+                @Override
+                public boolean onMarkerClick(Marker marker) {
+                    Toast.makeText(MapActivity.this, getLatLngString(marker.getPosition()), Toast.LENGTH_SHORT).show();
+                    getPlaceDetail(origin, destination, marker.getPosition());
+                    return true;
+                }
+            });
 
             // Now that map has loaded, let's get our location!
             mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -207,69 +245,104 @@ public class MapActivity extends AppCompatActivity implements
             myLatLng = latLng;
             CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 17);
             map.animateCamera(cameraUpdate);
-//            startLocationUpdates();
-            //TODO get origin, dest from selection intent
+            if(origin == null || origin.length() == 0){
+                origin = getLatLngString(latLng);
+            }
 
-            Log.d("in-- origin/dest", origin);
-            Log.d("in-- origin/dest", destination);
-
-            // TODO remove overrides
-            String origin = "Sunnyvale,CA";
-            String destination = "Palo Alto,CA";
             getDirection(origin, destination);
-            getRestaurants();
+
+
+
         } else {
             Toast.makeText(this, "Current location was null, enable GPS on emulator!", Toast.LENGTH_SHORT).show();
         }
     }
 
-    public void getRestaurants() {
-        String url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json";
+    public String getLatLngString(LatLng latLng){
+        return Double.toString(latLng.latitude)+","+Double.toString(latLng.longitude);
+    }
 
-//        url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=-33.8670522,151.1957362&radius=500&types=food&name=cruise&key=AIzaSyDtkF1VK5-Aj08-VcBb99b7DcH-jCJfnGE";
+    public void getRestaurants(LatLng latLng) {
+        String url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json";
         final BitmapDescriptor defaultMarker = BitmapDescriptorFactory
                 .defaultMarker(BitmapDescriptorFactory.HUE_BLUE);
 
         // specify the params
         RequestParams params = new RequestParams();
-        params.put("location", "-33.8670522,151.1957362");
+        params.put("location", getLatLngString(latLng));
         params.put("radius", radius);
         params.put("types","food");
-        params.put("name", food);
-        params.put("key","AIzaSyDC8ncI8wg-sQ--1cBeIzSFOQ6j1LlQOZU");
+        params.put("name",foodType);
+        params.put("key","AIzaSyDtkF1VK5-Aj08-VcBb99b7DcH-jCJfnGE");
         // execute the request
 
-//        AsyncHttpClient client = new AsyncHttpClient();
-
-
-        Log.d("in-- MyApp params", params.toString());
-
         client.addHeader("Accept-Encoding", "identity");
+        client.get(url, params, new JsonHttpResponseHandler() {
 
-        client.get(url, params, new AsyncHttpResponseHandler() {
             @Override
-            public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
-//                try {
-//                    Log.d("in-- getRestaurants", new String(responseBody, "UTF-8"));
-//                } catch (UnsupportedEncodingException e) {
-//                    Log.d("in-- rest e", e.toString());
-//
-//                    e.printStackTrace();
-//                }
-                //TODO assign wayPoints from response
+            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                ArrayList<Place> newPlaces = Place.fromJSONObj(response);
+                places.addAll(newPlaces);
+                addRest(newPlaces);
 
             }
 
             @Override
-            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+            public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
                 // called when response HTTP status is "4XX" (eg. 401, 403, 404)
-                Log.e("in-- MyApp", "Caught error", error);
-                Log.e("in-- MyApp failure", headers.toString());
-                try {
-                    Log.e("in-- MyApp failure", new String(responseBody, "UTF-8"));
-                } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
-                }
+            }
+        });
+    }
+
+    public void addRest(ArrayList<Place> places){
+        final BitmapDescriptor defaultMarker = BitmapDescriptorFactory
+                .defaultMarker(BitmapDescriptorFactory.HUE_BLUE);
+
+        for(int i=0;i<places.size();i++) {
+            LatLng latLng = places.get(i).getLatLng();
+            Marker marker = map.addMarker(new MarkerOptions()
+                    .position(latLng)
+                    .icon(defaultMarker));
+            placeMap.put(getLatLngString(latLng),places.get(i));
+
+            IconGenerator iconFactory = new IconGenerator(MapActivity.this);
+            iconFactory.setStyle(IconGenerator.STYLE_BLUE);
+            addIcon(iconFactory, places.get(i).getName(), latLng);
+        }
+    }
+
+    public void getPlaceDetail(String origin, String destination, final LatLng position) {
+        String url = "http://maps.googleapis.com/maps/api/directions/json";
+        final BitmapDescriptor defaultMarker = BitmapDescriptorFactory
+                .defaultMarker(BitmapDescriptorFactory.HUE_RED);
+
+        // specify the params
+        RequestParams params = new RequestParams();
+        params.put("origin", origin);
+        params.put("destination", destination);
+        params.put("sensor", false);
+        params.put("waypoints", getLatLngString(position));
+
+        // execute the request
+
+        client.get(url, params, new JsonHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                Map mapData = Map.fromJSON(response);
+                int delayTime = (mapData.getTotalDurationnSec() - durationSec)/60; //in min
+
+                //get place marker
+
+                Marker maker = markerMap.get(getLatLngString(position));
+                Place place = placeMap.get(getLatLngString(position));
+                maker.setTitle("+" + Integer.toString(delayTime) + " min");
+                maker.setSnippet(place.openStatus());
+                maker.showInfoWindow();
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
+                // called when response HTTP status is "4XX" (eg. 401, 403, 404)
             }
         });
     }
@@ -279,17 +352,13 @@ public class MapActivity extends AppCompatActivity implements
         final BitmapDescriptor defaultMarker = BitmapDescriptorFactory
                 .defaultMarker(BitmapDescriptorFactory.HUE_RED);
 
-//        AsyncHttpClient client = new AsyncHttpClient();
-
         // specify the params
         RequestParams params = new RequestParams();
         params.put("origin", origin);
         params.put("destination", destination);
         params.put("sensor",false);
-        // execute the request
 
-        //TODO add wayPoints to request
-        // https://developers.google.com/maps/documentation/directions/intro#Waypoints
+        // execute the request
 
         client.get(url, params, new JsonHttpResponseHandler() {
             @Override
@@ -300,6 +369,7 @@ public class MapActivity extends AppCompatActivity implements
                 Map mapData = Map.fromJSON(response);
                 String encodedPoints = mapData.getPolylinePoints();
                 String duration = mapData.getDuration();
+                durationSec = mapData.getDurationSec();
                 List<LatLng> latLngs = PolyUtil.decode(encodedPoints);
                 Log.d("in-- latLngs =", latLngs.toString());
 
@@ -323,7 +393,6 @@ public class MapActivity extends AppCompatActivity implements
             @Override
             public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
                 // called when response HTTP status is "4XX" (eg. 401, 403, 404)
-                Log.d("in-- DEBUG = statusCode", Integer.toString(statusCode));
             }
         });
     }
@@ -334,7 +403,8 @@ public class MapActivity extends AppCompatActivity implements
                 position(position).
                 anchor(iconFactory.getAnchorU(), iconFactory.getAnchorV());
 
-        map.addMarker(markerOptions);
+        Marker marker = map.addMarker(markerOptions);
+        markerMap.put(getLatLngString(position), marker);
     }
     public  void fixZoomForLatLngs(GoogleMap googleMap, List<LatLng> latLngs) {
         if (latLngs!=null && latLngs.size() > 0) {
@@ -352,6 +422,13 @@ public class MapActivity extends AppCompatActivity implements
         for (LatLng latLng : latLngs) {
             options.add(latLng);
         }
+        int latLngSize = latLngs.size();
+        Log.d("DEBUG latLngSize=", Integer.toString(latLngSize));
+        int step = latLngSize/20;
+        for(int i=0;i<latLngs.size();i+=step){
+            getRestaurants(latLngs.get(i));
+        }
+
         map.addPolyline(options);
     }
 
