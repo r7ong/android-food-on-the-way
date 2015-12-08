@@ -19,6 +19,15 @@ public class Place {
     String name;
     LatLng latLng;
     String extraTime;
+    Boolean openNow;
+
+    public String openStatus(){
+        if(openNow){
+            return "OPEN NOW";
+        }else{
+            return "CLOSED";
+        }
+    }
 
     public void setExtraTime(String extraTime) {
         this.extraTime = extraTime;
@@ -49,6 +58,13 @@ public class Place {
             place.name = jsonObject.getString("name");
             JSONObject location = jsonObject.getJSONObject("geometry").getJSONObject("location");
             place.latLng = new LatLng(Double.valueOf(location.getString("lat")), Double.valueOf(location.getString("lng")));
+            JSONObject hours = jsonObject.getJSONObject("opening_hours");
+            if(hours != null){
+                place.openNow = hours.getBoolean("open_now");
+            }else{
+                place.openNow = false;
+            }
+
             Log.d("in-- place", place.toString());
         } catch (JSONException e) {
             e.printStackTrace();
