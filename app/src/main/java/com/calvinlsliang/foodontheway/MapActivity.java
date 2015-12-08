@@ -81,6 +81,8 @@ public class MapActivity extends AppCompatActivity implements
     //TODO get origin, dest from selection intent
     String origin = "Sunnyvale,CA";
     String destination = "Palo Alto,CA";
+    String radius = "500";
+    String foodType = "burger";
 
     AsyncHttpClient client;
 
@@ -233,6 +235,9 @@ public class MapActivity extends AppCompatActivity implements
             myLatLng = latLng;
             CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 17);
             map.animateCamera(cameraUpdate);
+            if(origin == null || origin.length() == 0){
+                origin = getLatLngString(latLng);
+            }
 
             getDirection(origin, destination);
 
@@ -255,14 +260,12 @@ public class MapActivity extends AppCompatActivity implements
         // specify the params
         RequestParams params = new RequestParams();
         params.put("location", getLatLngString(latLng));
-        params.put("radius", "500");
+        params.put("radius", radius);
         params.put("types","food");
-        params.put("name","burger");
+        params.put("name",foodType);
         params.put("key","AIzaSyDtkF1VK5-Aj08-VcBb99b7DcH-jCJfnGE");
         // execute the request
-
-//        AsyncHttpClient client = new AsyncHttpClient();
-
+        
         client.addHeader("Accept-Encoding", "identity");
         client.get(url, params, new JsonHttpResponseHandler() {
 
@@ -307,7 +310,7 @@ public class MapActivity extends AppCompatActivity implements
         RequestParams params = new RequestParams();
         params.put("origin", origin);
         params.put("destination", destination);
-        params.put("sensor",false);
+        params.put("sensor", false);
         params.put("waypoints", getLatLngString(position));
 
         // execute the request
