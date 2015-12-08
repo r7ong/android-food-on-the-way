@@ -47,51 +47,13 @@
         android:layout_alignLeft="@+id/etStart"
         android:layout_alignStart="@+id/etStart" />
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="TIME"
-        android:id="@+id/tvTime"
-        android:layout_below="@+id/tvDestination"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:textSize="20dp"
-        android:layout_margin="20dp" />
-
-    <Spinner
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/spinnerTime"
-        android:layout_below="@+id/tvDestination"
-        android:layout_alignLeft="@+id/etDestination"
-        android:layout_alignStart="@+id/etDestination"
-        android:spinnerMode="dropdown" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="FOOD"
-        android:id="@+id/tvFood"
-        android:layout_below="@+id/tvTime"
-        android:layout_margin="20dp"
-        android:textSize="20dp" />
-
-    <Spinner
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/spinnerFood"
-        android:layout_below="@+id/spinnerTime"
-        android:layout_alignLeft="@+id/spinnerTime"
-        android:layout_alignStart="@+id/spinnerTime"
-        android:spinnerMode="dropdown" />
-
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Search"
         android:id="@+id/btnSearch"
-        android:layout_below="@+id/spinnerFood"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="40dp"
-        android:onClick="selectMap"/>
+        android:onClick="selectMap"
+        android:layout_below="@+id/tvDestination" />
 </RelativeLayout>
