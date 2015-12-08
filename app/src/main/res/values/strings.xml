@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">FoodOnTheWay</string>
+    <string-array name="distance_array">
+        <item>Near (5 miles)</item>
+        <item>Close (10 miles)</item>
+        <item>Far (20 miles)</item>
+    </string-array>
 </resources>
