@@ -52,8 +52,26 @@
         android:layout_height="wrap_content"
         android:text="Search"
         android:id="@+id/btnSearch"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="40dp"
         android:onClick="selectMap"
-        android:layout_below="@+id/tvDestination" />
+        android:layout_below="@+id/tvDistance"
+        android:layout_centerHorizontal="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="DISTANCE"
+        android:id="@+id/tvDistance"
+        android:layout_below="@+id/tvDestination"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_margin="20dp"
+        android:textSize="20dp" />
+
+    <Spinner
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/spinner"
+        android:layout_alignBottom="@+id/tvDistance"
+        android:layout_toRightOf="@+id/tvDistance"
+        android:layout_toEndOf="@+id/tvDistance" />
 </RelativeLayout>

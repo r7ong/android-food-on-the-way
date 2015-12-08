@@ -4,23 +4,9 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.IntentSender;
-import android.graphics.Bitmap;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
-import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
-import android.widget.Toast;
-
-
-import android.app.Activity;
-import android.app.Dialog;
-import android.content.Intent;
-import android.content.IntentSender;
-import android.location.Location;
-import android.os.Bundle;
-import android.support.v4.app.DialogFragment;
-import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.Toast;
@@ -39,14 +25,11 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
-
-
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.maps.android.PolyUtil;
-import com.google.maps.android.ui.BubbleIconFactory;
 import com.google.maps.android.ui.IconGenerator;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
@@ -54,8 +37,9 @@ import com.loopj.android.http.JsonHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
 
 import org.apache.http.Header;
-import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 
 public class MapActivity extends AppCompatActivity implements
@@ -71,6 +55,10 @@ public class MapActivity extends AppCompatActivity implements
     private long FASTEST_INTERVAL = 5000; /* 5 secs */
 
     private LatLng myLatLng;
+    private List<String> wayPoints;
+
+    private String origin = null;
+    private String destination = null;
 
 //    private MapClient client;
 
@@ -100,6 +88,9 @@ public class MapActivity extends AppCompatActivity implements
         }
 //        client = new MapClient();
         client = new AsyncHttpClient();
+
+        origin = getIntent().getStringExtra("origin");
+        destination = getIntent().getStringExtra("destination");
 
     }
 
@@ -214,12 +205,69 @@ public class MapActivity extends AppCompatActivity implements
             map.animateCamera(cameraUpdate);
 //            startLocationUpdates();
             //TODO get origin, dest from selection intent
+
+            Log.d("in-- origin/dest", origin);
+            Log.d("in-- origin/dest", destination);
+
+            // TODO remove overrides
             String origin = "Sunnyvale,CA";
             String destination = "Palo Alto,CA";
             getDirection(origin, destination);
+            getRestaurants();
         } else {
             Toast.makeText(this, "Current location was null, enable GPS on emulator!", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    public void getRestaurants() {
+        String url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json";
+
+//        url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=-33.8670522,151.1957362&radius=500&types=food&name=cruise&key=AIzaSyDtkF1VK5-Aj08-VcBb99b7DcH-jCJfnGE";
+        final BitmapDescriptor defaultMarker = BitmapDescriptorFactory
+                .defaultMarker(BitmapDescriptorFactory.HUE_BLUE);
+
+        // specify the params
+        RequestParams params = new RequestParams();
+        params.put("location", "-33.8670522,151.1957362");
+        params.put("radius", "500");
+        params.put("types","food");
+        params.put("name","cruise");
+        params.put("key","AIzaSyDC8ncI8wg-sQ--1cBeIzSFOQ6j1LlQOZU");
+        // execute the request
+
+//        AsyncHttpClient client = new AsyncHttpClient();
+
+
+        Log.d("in-- MyApp params", params.toString());
+
+        client.addHeader("Accept-Encoding", "identity");
+
+        client.get(url, params, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+//                try {
+//                    Log.d("in-- getRestaurants", new String(responseBody, "UTF-8"));
+//                } catch (UnsupportedEncodingException e) {
+//                    Log.d("in-- rest e", e.toString());
+//
+//                    e.printStackTrace();
+//                }
+                //TODO assign wayPoints from response
+
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+                // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                Log.e("in-- MyApp", "Caught error", error);
+                Log.e("in-- MyApp failure", headers.toString());
+                try {
+                    Log.e("in-- MyApp failure", new String(responseBody, "UTF-8"));
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
     public void getDirection(String origin, String destination) {
@@ -235,6 +283,9 @@ public class MapActivity extends AppCompatActivity implements
         params.put("destination", destination);
         params.put("sensor",false);
         // execute the request
+
+        //TODO add wayPoints to request
+        // https://developers.google.com/maps/documentation/directions/intro#Waypoints
 
         client.get(url, params, new JsonHttpResponseHandler() {
             @Override
@@ -261,6 +312,8 @@ public class MapActivity extends AppCompatActivity implements
                 //adding polyline
                 addPolylineToMap(latLngs);
                 fixZoomForLatLngs(map, latLngs);
+
+                //TODO add wayPoints on map and label with time of delay
             }
 
             @Override
