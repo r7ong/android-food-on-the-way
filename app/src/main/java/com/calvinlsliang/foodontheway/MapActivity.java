@@ -46,15 +46,13 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.maps.android.PolyUtil;
-import com.google.maps.android.ui.BubbleIconFactory;
+
 import com.google.maps.android.ui.IconGenerator;
 import com.loopj.android.http.AsyncHttpClient;
-import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.JsonHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
 
 import org.apache.http.Header;
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -84,8 +82,6 @@ public class MapActivity extends AppCompatActivity implements
     String origin = "Sunnyvale,CA";
     String destination = "Palo Alto,CA";
 
-//    private MapClient client;
-
     AsyncHttpClient client;
 
     /*
@@ -110,7 +106,6 @@ public class MapActivity extends AppCompatActivity implements
         } else {
             Toast.makeText(this, "Error - Map Fragment was null!!", Toast.LENGTH_SHORT).show();
         }
-//        client = new MapClient();
         client = new AsyncHttpClient();
         places = new ArrayList<>();
 
@@ -238,7 +233,6 @@ public class MapActivity extends AppCompatActivity implements
             myLatLng = latLng;
             CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 17);
             map.animateCamera(cameraUpdate);
-//            startLocationUpdates();
 
             getDirection(origin, destination);
 
@@ -260,7 +254,6 @@ public class MapActivity extends AppCompatActivity implements
 
         // specify the params
         RequestParams params = new RequestParams();
-//        params.put("location", "37.368900000000004,-122.03633");
         params.put("location", getLatLngString(latLng));
         params.put("radius", "500");
         params.put("types","food");
@@ -275,15 +268,8 @@ public class MapActivity extends AppCompatActivity implements
 
             @Override
             public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
-                Log.d("in-- getRestaurants", response.toString());
-                //TODO assign wayPoints from response
                 ArrayList<Place> newPlaces = Place.fromJSONObj(response);
-                //add duration
-//                for()
                 places.addAll(newPlaces);
-
-
-                //remove
                 addRest(newPlaces);
 
             }
@@ -291,7 +277,6 @@ public class MapActivity extends AppCompatActivity implements
             @Override
             public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
                 // called when response HTTP status is "4XX" (eg. 401, 403, 404)
-                Log.e("in-- MyApp", "Caught error", t);
             }
         });
     }
@@ -299,15 +284,11 @@ public class MapActivity extends AppCompatActivity implements
     public void addRest(ArrayList<Place> places){
         final BitmapDescriptor defaultMarker = BitmapDescriptorFactory
                 .defaultMarker(BitmapDescriptorFactory.HUE_BLUE);
-        Log.d("in-- placesize", Integer.toString(places.size()));
-//        Log.d("in-- placesize latlng", places.get(0).getName());
 
         for(int i=0;i<places.size();i++) {
             LatLng latLng = places.get(i).getLatLng();
             Marker marker = map.addMarker(new MarkerOptions()
                     .position(latLng)
-                            //                        .title(title)
-                            //                        .snippet(snippet)
                     .icon(defaultMarker));
             placeMap.put(getLatLngString(latLng),places.get(i));
 
@@ -334,10 +315,8 @@ public class MapActivity extends AppCompatActivity implements
         client.get(url, params, new JsonHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
-                Log.d("in-- getPlaceDetail", response.toString());
                 Map mapData = Map.fromJSON(response);
                 int delayTime = (mapData.getTotalDurationnSec() - durationSec)/60; //in min
-                Log.d("in-- delayTime =", Integer.toString(delayTime));
 
                 //get place marker
 
@@ -346,25 +325,11 @@ public class MapActivity extends AppCompatActivity implements
                 maker.setTitle("+" + Integer.toString(delayTime) + " min");
                 maker.setSnippet(place.openStatus());
                 maker.showInfoWindow();
-
-
-//                Marker marker = map.addMarker(new MarkerOptions()
-//                        .position(position)
-////                        .title(title)
-////                        .snippet(snippet)
-//                        .icon(defaultMarker));
-                /*
-                IconGenerator iconFactory = new IconGenerator(MapActivity.this);
-                iconFactory.setStyle(IconGenerator.STYLE_RED);
-                addIcon(iconFactory, "+" + Integer.toString(delayTime) + " min", position);
-*/
-                //TODO add wayPoints on map and label with time of delay
             }
 
             @Override
             public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
                 // called when response HTTP status is "4XX" (eg. 401, 403, 404)
-//                Log.d("in-- DEBUG = statusCode", Integer.toString(statusCode));
             }
         });
     }
@@ -374,16 +339,11 @@ public class MapActivity extends AppCompatActivity implements
         final BitmapDescriptor defaultMarker = BitmapDescriptorFactory
                 .defaultMarker(BitmapDescriptorFactory.HUE_RED);
 
-//        AsyncHttpClient client = new AsyncHttpClient();
-
         // specify the params
         RequestParams params = new RequestParams();
         params.put("origin", origin);
         params.put("destination", destination);
         params.put("sensor",false);
-        //TODO add wayPoints to request
-        // https://developers.google.com/maps/documentation/directions/intro#Waypoints
-//        params.put("waypoints", wayPoints);
 
         // execute the request
 
@@ -420,7 +380,6 @@ public class MapActivity extends AppCompatActivity implements
             @Override
             public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
                 // called when response HTTP status is "4XX" (eg. 401, 403, 404)
-//                Log.d("in-- DEBUG = statusCode", Integer.toString(statusCode));
             }
         });
     }
