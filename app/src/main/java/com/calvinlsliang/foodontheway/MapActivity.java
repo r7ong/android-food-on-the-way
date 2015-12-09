@@ -139,7 +139,7 @@ public class MapActivity extends AppCompatActivity implements
                 public boolean onMarkerClick(Marker marker) {
                     Toast.makeText(MapActivity.this, getLatLngString(marker.getPosition()), Toast.LENGTH_SHORT).show();
                     getPlaceDetail(origin, destination, marker.getPosition());
-                    return true;
+                    return false;
                 }
             });
 
@@ -333,11 +333,13 @@ public class MapActivity extends AppCompatActivity implements
 
                 //get place marker
 
-                Marker maker = markerMap.get(getLatLngString(position));
+                Marker marker = markerMap.get(getLatLngString(position));
                 Place place = placeMap.get(getLatLngString(position));
-                maker.setTitle("+" + Integer.toString(delayTime) + " min");
-                maker.setSnippet(place.openStatus());
-                maker.showInfoWindow();
+                if(marker != null) {
+                    marker.setTitle("+" + Integer.toString(delayTime) + " min");
+                    marker.setSnippet(place.openStatus());
+                    marker.showInfoWindow();
+                }
             }
 
             @Override
